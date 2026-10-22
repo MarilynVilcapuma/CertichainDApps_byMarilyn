@@ -1,0 +1,21 @@
+# Dependencias y compilados: se generan dentro de la imagen
+node_modules
+dist
+
+# Secretos: nunca deben entrar a la imagen (la clave va como --build-arg)
+.env
+.env.*
+!.env.example
+
+# Control de versiones y editor
+.git
+.gitignore
+.vscode
+.idea
+
+# Archivos que no se usan en la construcción
+Dockerfile
+.dockerignore
+README.md
+contracts
+*.log

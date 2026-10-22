@@ -1,0 +1,112 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-mesh-bg: #0a0e17;
+  --color-mesh-card: #121826;
+  --color-mesh-cardHover: #182032;
+  --color-mesh-border: rgba(139, 92, 246, 0.18);
+  --color-mesh-input: #0f1523;
+  --color-mesh-primary: #8b5cf6;
+  --color-mesh-primaryHover: #7c3aed;
+  --color-mesh-secondary: #22d3ee;
+  --color-mesh-secondaryHover: #06b6d4;
+  --color-mesh-tertiary: #a78bfa;
+  --color-mesh-textDark: #94a3b8;
+
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Compensa el header sticky (h-20 = 5rem) al saltar a una sección por ancla */
+section[id] {
+  scroll-margin-top: 5rem;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #0a0e17;
+  color: #f1f5f9;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-heading {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Glassmorphism cards, reutilizado en todo el mesh */
+.mesh-card {
+  background: rgba(18, 24, 38, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.mesh-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mesh-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(34, 211, 238, 0.5);
+  box-shadow: 0 14px 35px -10px rgba(139, 92, 246, 0.25);
+}
+
+/* Halos de neón */
+.glow-violet {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0) 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow-cyan {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.2) 0%, rgba(34, 211, 238, 0) 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0e17;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8b5cf6;
+}
+
+.bg-mesh-pattern {
+  background-size: 32px 32px;
+  background-image:
+    linear-gradient(to right, rgba(139, 92, 246, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(139, 92, 246, 0.05) 1px, transparent 1px);
+}
+
+/* Foco visible para teclado */
+:focus-visible {
+  outline: 2px solid var(--color-mesh-secondary);
+  outline-offset: 2px;
+}

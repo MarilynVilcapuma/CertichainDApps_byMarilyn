@@ -1,0 +1,100 @@
+# ---------------------------------------------------------------
+# CI/CD de CertiChain Perú (GitHub Actions)
+#   compilar → comprueba que la DApp compila (también en pull requests)
+#   docker   → construye la imagen y la sube a Docker Hub
+#   vercel   → publica en Vercel
+#
+# develop → imagen :develop y vista previa en Vercel
+# main    → imagen :latest y producción en Vercel
+#
+# Secretos requeridos (Settings → Secrets and variables → Actions):
+#   DOCKERHUB_USERNAME, DOCKERHUB_TOKEN   token de acceso de Docker Hub (no la contraseña)
+#   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+#   VITE_ETHERSCAN_KEY                    clave de Etherscan para compilar
+# Nunca escribas estos valores en el repositorio.
+# ---------------------------------------------------------------
+name: CI/CD
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+# Un despliegue nuevo cancela el anterior de la misma rama
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  compilar:
+    name: Compilar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_ETHERSCAN_KEY: ${{ secrets.VITE_ETHERSCAN_KEY }}
+
+  docker:
+    name: Imagen en Docker Hub
+    needs: compilar
+    # Los pull requests solo compilan: no publican imágenes ni usan secretos
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            VITE_ETHERSCAN_KEY=${{ secrets.VITE_ETHERSCAN_KEY }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/certichain:${{ github.ref_name == 'main' && 'latest' || 'develop' }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/certichain:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  vercel:
+    name: Publicar en Vercel
+    needs: compilar
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Vite la incrusta al compilar; así no hace falta repetirla en el panel de Vercel
+      VITE_ETHERSCAN_KEY: ${{ secrets.VITE_ETHERSCAN_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i -g vercel@latest
+      - name: Producción (main)
+        if: github.ref_name == 'main'
+        run: |
+          vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+          vercel build --prod --token "$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+      - name: Vista previa (develop)
+        if: github.ref_name != 'main'
+        run: |
+          vercel pull --yes --environment=preview --token "$VERCEL_TOKEN"
+          vercel build --token "$VERCEL_TOKEN"
+          vercel deploy --prebuilt --token "$VERCEL_TOKEN"
